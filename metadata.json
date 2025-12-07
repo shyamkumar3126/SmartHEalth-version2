@@ -1,0 +1,9 @@
+{
+  "name": "HealthPlus",
+  "description": "A comprehensive health application for doctor bookings, medicine delivery, lab tests, and health records.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
