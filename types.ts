@@ -9,6 +9,8 @@ export enum Speciality {
   Gynecologist = "Gynecologist"
 }
 
+export type UserRole = 'patient' | 'doctor' | 'admin';
+
 export interface Doctor {
   id: string;
   name: string;
@@ -103,4 +105,20 @@ export interface UserProfile {
   bmi: number;
   bp: string;
   heartRate: string;
+}
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  role: 'Doctor' | 'Patient' | 'Admin';
+  email: string;
+  status: 'Active' | 'Inactive';
+  joinDate: string;
+}
+
+export interface ActivityLog {
+  id: string;
+  user: string;
+  action: string;
+  date: string;
 }

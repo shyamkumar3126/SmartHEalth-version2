@@ -14,11 +14,16 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronRight
+  Users,
+  Settings,
+  ClipboardList,
+  ShieldAlert,
+  Grid
 } from 'lucide-react';
 import { MOCK_USER } from '../constants';
+import { UserRole } from '../types';
 
-export const Layout: React.FC<{ children: React.ReactNode, cartCount: number, onLogout: () => void }> = ({ children, cartCount, onLogout }) => {
+export const Layout: React.FC<{ children: React.ReactNode, cartCount: number, onLogout: () => void, userRole: UserRole }> = ({ children, cartCount, onLogout, userRole }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -28,7 +33,7 @@ export const Layout: React.FC<{ children: React.ReactNode, cartCount: number, on
     setIsMobileMenuOpen(false);
   }, [location]);
 
-  const navItems = [
+  const patientNavItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
     { name: 'Find Doctor', icon: Stethoscope, path: '/doctors' },
     { name: 'My Appointments', icon: CalendarDays, path: '/appointments' },
@@ -41,23 +46,62 @@ export const Layout: React.FC<{ children: React.ReactNode, cartCount: number, on
     { name: 'My Profile', icon: User, path: '/profile' },
   ];
 
+  const doctorNavItems = [
+    { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
+    { name: 'My Schedule', icon: CalendarDays, path: '/appointments' },
+    { name: 'My Patients', icon: Users, path: '/patients' }, // Placeholder route
+    { name: 'Consultations', icon: MessageSquare, path: '/consult' },
+    { name: 'Health Records', icon: FileText, path: '/records' },
+    { name: 'Notifications', icon: Bell, path: '/notifications' },
+    { name: 'Profile & Settings', icon: User, path: '/profile' },
+  ];
+
+  const adminNavItems = [
+    { name: 'Overview', icon: Grid, path: '/' },
+    { name: 'User Management', icon: User, path: '/users' },
+    { name: 'Settings', icon: Settings, path: '/settings' },
+  ];
+
+  let navItems = patientNavItems;
+  let userName = MOCK_USER.name;
+  let userLabel = "Patient";
+  let userInitial = MOCK_USER.name.split(' ').map(n => n[0]).join('');
+
+  if (userRole === 'doctor') {
+    navItems = doctorNavItems;
+    userName = "Dr. Aarav Patel";
+    userLabel = "Cardiologist";
+    userInitial = "DA";
+  } else if (userRole === 'admin') {
+    navItems = adminNavItems;
+    userName = "System Admin";
+    userLabel = "Admin";
+    userInitial = "SA";
+  }
+
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-white border-r border-gray-100">
       <div className="p-6 flex items-center gap-3">
-        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center text-green-600">
-           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center text-primary-600">
+           {userRole === 'admin' ? (
+             <ShieldAlert className="w-5 h-5" />
+           ) : (
+             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+           )}
         </div>
-        <span className="text-xl font-bold text-gray-800">HealthCare</span>
+        <span className="text-xl font-bold text-gray-800">
+          {userRole === 'admin' ? 'MediConnect' : 'HealthPlus'}
+        </span>
       </div>
 
       <div className="p-4 border-b border-gray-100">
          <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl">
-            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
-              {MOCK_USER.name.split(' ').map(n => n[0]).join('')}
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${userRole === 'admin' ? 'bg-gray-800' : userRole === 'doctor' ? 'bg-primary-600' : 'bg-blue-600'}`}>
+              {userInitial}
             </div>
             <div className="flex-1 min-w-0">
-               <p className="text-sm font-bold text-gray-900 truncate">{MOCK_USER.name}</p>
-               <p className="text-xs text-gray-500 truncate">Patient</p>
+               <p className="text-sm font-bold text-gray-900 truncate">{userName}</p>
+               <p className="text-xs text-gray-500 truncate">{userLabel}</p>
             </div>
          </div>
       </div>
@@ -103,10 +147,16 @@ export const Layout: React.FC<{ children: React.ReactNode, cartCount: number, on
       {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-50 flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
-           <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center text-green-600">
-             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+           <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center text-primary-600">
+             {userRole === 'admin' ? (
+               <ShieldAlert className="w-5 h-5" />
+             ) : (
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+             )}
            </div>
-           <span className="font-bold text-gray-800">HealthCare</span>
+           <span className="font-bold text-gray-800">
+            {userRole === 'admin' ? 'MediConnect' : 'HealthPlus'}
+           </span>
         </div>
         <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 text-gray-600">
           <Menu size={24} />
@@ -132,7 +182,7 @@ export const Layout: React.FC<{ children: React.ReactNode, cartCount: number, on
       {/* Main Content */}
       <main className="flex-1 md:ml-64 p-4 md:p-8 pt-20 md:pt-8 w-full max-w-[100vw] overflow-x-hidden">
         {/* Simple floating cart button for mobile if needed, or integrate into sidebar */}
-        {cartCount > 0 && (
+        {cartCount > 0 && userRole === 'patient' && (
            <div className="fixed bottom-6 right-6 z-40 md:hidden">
               <button 
                 onClick={() => navigate('/cart')}

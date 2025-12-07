@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Search, MapPin, Star, Video, ShoppingCart, Plus, Upload, Trash2, 
   Activity, Filter, Info, ShieldCheck, Clock, FileText, ChevronRight, 
-  Calendar, Lock, Mail, User, Home, Download, MessageSquare, Phone, TestTube2
+  Calendar, Lock, Mail, User, Home, Download, MessageSquare, Phone, TestTube2, Edit2, Check,
+  Users, AlertTriangle, Activity as ActivityIcon, MoreVertical, ToggleLeft, ToggleRight, Save, Settings
 } from 'lucide-react';
-import { MOCK_DOCTORS, MOCK_MEDICINES, MOCK_LAB_TESTS, MOCK_CLINICS, MOCK_APPOINTMENTS, MOCK_USER } from '../constants';
-import { Doctor, Medicine, LabTest, CartItem, HealthRecord, Clinic, UserProfile } from '../types';
+import { MOCK_DOCTORS, MOCK_MEDICINES, MOCK_LAB_TESTS, MOCK_CLINICS, MOCK_APPOINTMENTS, MOCK_USER, MOCK_ADMIN_USERS, MOCK_ACTIVITY_LOG } from '../constants';
+import { Doctor, Medicine, LabTest, CartItem, HealthRecord, Clinic, UserProfile, Appointment, UserRole, AdminUser } from '../types';
 import { BookingModal, PaymentModal } from './Modals';
 
 // --- Shared Components ---
@@ -21,8 +23,281 @@ const SectionHeader: React.FC<{ title: string, subtitle?: string, children?: Rea
   </div>
 );
 
+// --- Admin Dashboard View ---
+export const AdminDashboardView: React.FC = () => {
+  return (
+    <div>
+      <SectionHeader title="Admin Panel" subtitle="System Overview" />
+      
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-start">
+           <div>
+              <p className="text-gray-500 text-sm font-medium mb-1">Total Users</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">2,543</h2>
+              <div className="flex gap-2">
+                 <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-lg font-medium">Doctors: 45</span>
+                 <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-lg font-medium">Patients: 2,498</span>
+              </div>
+           </div>
+           <div className="bg-blue-100 p-3 rounded-xl text-blue-600">
+              <Users size={24} />
+           </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-start">
+           <div>
+              <p className="text-gray-500 text-sm font-medium mb-1">System Health</p>
+              <h2 className="text-3xl font-bold text-green-600 mb-2">98%</h2>
+              <p className="text-gray-400 text-xs">All services operational</p>
+           </div>
+           <div className="bg-green-100 p-3 rounded-xl text-green-600">
+              <ActivityIcon size={24} />
+           </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-start">
+           <div>
+              <p className="text-gray-500 text-sm font-medium mb-1">Reports</p>
+              <h2 className="text-3xl font-bold text-orange-600 mb-2">12</h2>
+              <p className="text-gray-400 text-xs">Requires attention</p>
+           </div>
+           <div className="bg-orange-100 p-3 rounded-xl text-orange-600">
+              <AlertTriangle size={24} />
+           </div>
+        </div>
+      </div>
+
+      {/* Activity Log */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+            <h3 className="font-bold text-lg text-gray-900">Recent Activity Log</h3>
+            <button className="text-primary-600 text-sm font-medium hover:underline">View All</button>
+         </div>
+         <div className="overflow-x-auto">
+            <table className="w-full text-left">
+               <thead className="bg-gray-50">
+                  <tr>
+                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">User</th>
+                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Action</th>
+                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase text-right">Date</th>
+                  </tr>
+               </thead>
+               <tbody className="divide-y divide-gray-100">
+                  {MOCK_ACTIVITY_LOG.map((log) => (
+                     <tr key={log.id} className="hover:bg-gray-50 transition">
+                        <td className="px-6 py-4 text-sm font-bold text-gray-900">{log.user}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{log.action}</td>
+                        <td className="px-6 py-4 text-sm text-gray-400 text-right">{log.date}</td>
+                     </tr>
+                  ))}
+               </tbody>
+            </table>
+         </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Admin User Management View ---
+export const AdminUserManagementView: React.FC = () => {
+  const [filter, setFilter] = useState('');
+  const [activeTab, setActiveTab] = useState<'All' | 'Doctors' | 'Patients'>('All');
+
+  const filteredUsers = MOCK_ADMIN_USERS.filter(user => {
+    const matchesFilter = user.name.toLowerCase().includes(filter.toLowerCase()) || user.email.toLowerCase().includes(filter.toLowerCase());
+    if (activeTab === 'All') return matchesFilter;
+    if (activeTab === 'Doctors') return matchesFilter && user.role === 'Doctor';
+    if (activeTab === 'Patients') return matchesFilter && user.role === 'Patient';
+    return matchesFilter;
+  });
+
+  return (
+    <div>
+      <SectionHeader title="User Management" subtitle="Manage doctors, patients, and administrators" />
+      
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+         <div className="flex bg-gray-100 p-1 rounded-xl">
+            {['All', 'Doctors', 'Patients'].map(tab => (
+               <button 
+                  key={tab}
+                  onClick={() => setActiveTab(tab as any)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === tab ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+               >
+                  {tab}
+               </button>
+            ))}
+         </div>
+         <div className="relative w-full md:w-auto flex-1 md:max-w-md">
+            <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+            <input 
+               type="text" 
+               placeholder="Search by name or email..." 
+               className="w-full pl-10 pr-4 py-2 bg-white rounded-xl border border-gray-200 outline-none focus:border-primary-500 text-sm"
+               value={filter}
+               onChange={(e) => setFilter(e.target.value)}
+            />
+         </div>
+         <button className="bg-primary-600 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 hover:bg-primary-700 transition shadow-md shadow-primary-200 whitespace-nowrap">
+            <Plus size={16} /> Add User
+         </button>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+         <div className="overflow-x-auto">
+            <table className="w-full text-left">
+               <thead className="bg-gray-50">
+                  <tr>
+                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">User Name</th>
+                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Role</th>
+                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Joined</th>
+                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
+                  </tr>
+               </thead>
+               <tbody className="divide-y divide-gray-100">
+                  {filteredUsers.map((user) => (
+                     <tr key={user.id} className="hover:bg-gray-50 transition group">
+                        <td className="px-6 py-4">
+                           <div className="flex items-center gap-3">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${user.role === 'Doctor' ? 'bg-primary-500' : 'bg-blue-500'}`}>
+                                 {user.name.charAt(0)}
+                              </div>
+                              <div>
+                                 <p className="text-sm font-bold text-gray-900">{user.name}</p>
+                                 <p className="text-xs text-gray-500">{user.email}</p>
+                              </div>
+                           </div>
+                        </td>
+                        <td className="px-6 py-4">
+                           <span className={`px-2 py-1 rounded-md text-xs font-medium ${user.role === 'Doctor' ? 'bg-purple-100 text-purple-700' : user.role === 'Admin' ? 'bg-gray-800 text-white' : 'bg-blue-100 text-blue-700'}`}>
+                              {user.role}
+                           </span>
+                        </td>
+                        <td className="px-6 py-4">
+                           <span className={`flex items-center gap-1.5 text-sm ${user.status === 'Active' ? 'text-green-600' : 'text-gray-400'}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${user.status === 'Active' ? 'bg-green-600' : 'bg-gray-400'}`}></span>
+                              {user.status}
+                           </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">{user.joinDate}</td>
+                        <td className="px-6 py-4 text-right">
+                           <button className="text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100 transition">
+                              <MoreVertical size={16} />
+                           </button>
+                        </td>
+                     </tr>
+                  ))}
+               </tbody>
+            </table>
+         </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Admin Settings View ---
+export const AdminSettingsView: React.FC = () => {
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [registrations, setRegistrations] = useState(true);
+
+  return (
+    <div>
+      <SectionHeader title="System Settings" subtitle="Configure platform preferences and controls" />
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+         {/* General Settings */}
+         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <h3 className="font-bold text-lg text-gray-900 mb-6 flex items-center gap-2">
+               <Settings size={20} className="text-gray-500" /> General Configuration
+            </h3>
+            
+            <div className="space-y-4">
+               <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">System Name</label>
+                  <input type="text" defaultValue="MediConnect" className="w-full p-3 bg-white rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-500 outline-none text-sm" />
+               </div>
+               <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Support Email</label>
+                  <input type="email" defaultValue="support@mediconnect.com" className="w-full p-3 bg-white rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-500 outline-none text-sm" />
+               </div>
+               
+               <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+                  <div>
+                     <p className="font-medium text-gray-900 text-sm">Maintenance Mode</p>
+                     <p className="text-xs text-gray-500">Disable access for non-admin users</p>
+                  </div>
+                  <button 
+                     onClick={() => setMaintenanceMode(!maintenanceMode)}
+                     className={`text-2xl transition-colors ${maintenanceMode ? 'text-primary-600' : 'text-gray-300'}`}
+                  >
+                     {maintenanceMode ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
+                  </button>
+               </div>
+
+               <div className="py-2 flex items-center justify-between">
+                  <div>
+                     <p className="font-medium text-gray-900 text-sm">Allow New Registrations</p>
+                     <p className="text-xs text-gray-500">Enable new user signups</p>
+                  </div>
+                  <button 
+                     onClick={() => setRegistrations(!registrations)}
+                     className={`text-2xl transition-colors ${registrations ? 'text-primary-600' : 'text-gray-300'}`}
+                  >
+                     {registrations ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
+                  </button>
+               </div>
+            </div>
+            
+            <button className="mt-6 w-full bg-primary-600 text-white py-2.5 rounded-xl font-medium hover:bg-primary-700 transition flex items-center justify-center gap-2">
+               <Save size={18} /> Save Changes
+            </button>
+         </div>
+
+         {/* Admin Accounts */}
+         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+             <div className="flex justify-between items-center mb-6">
+                <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">
+                   <ShieldCheck size={20} className="text-gray-500" /> Admin Accounts
+                </h3>
+                <button className="text-primary-600 text-sm font-medium hover:underline flex items-center gap-1">
+                   <Plus size={14} /> Add Admin
+                </button>
+             </div>
+
+             <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                   <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gray-800 text-white flex items-center justify-center text-xs font-bold">SA</div>
+                      <div>
+                         <p className="text-sm font-bold text-gray-900">System Admin</p>
+                         <p className="text-xs text-gray-500">Super Admin</p>
+                      </div>
+                   </div>
+                   <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-md">Active</span>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl">
+                   <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-xs font-bold">JD</div>
+                      <div>
+                         <p className="text-sm font-bold text-gray-900">John Doe</p>
+                         <p className="text-xs text-gray-500">Support Lead</p>
+                      </div>
+                   </div>
+                   <button className="text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
+                </div>
+             </div>
+         </div>
+      </div>
+    </div>
+  );
+};
+
 // --- Login View ---
-export const LoginView: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
+export const LoginView: React.FC<{ onLogin: (role: UserRole) => void }> = ({ onLogin }) => {
+  const [role, setRole] = useState<UserRole>('patient');
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl shadow-xl w-full max-w-md p-8">
@@ -36,9 +311,24 @@ export const LoginView: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         <p className="text-center text-gray-400 mb-8">Sign in to manage your health</p>
 
         <div className="bg-primary-50 p-1 rounded-xl flex mb-6">
-          <button className="flex-1 py-2 rounded-lg bg-primary-600 text-white text-sm font-semibold shadow-sm">PATIENT</button>
-          <button className="flex-1 py-2 rounded-lg text-gray-400 text-sm font-semibold hover:text-primary-600">DOCTOR</button>
-          <button className="flex-1 py-2 rounded-lg text-gray-400 text-sm font-semibold hover:text-primary-600">ADMIN</button>
+          <button 
+            onClick={() => setRole('patient')}
+            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${role === 'patient' ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-400 hover:text-primary-600'}`}
+          >
+            PATIENT
+          </button>
+          <button 
+            onClick={() => setRole('doctor')}
+            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${role === 'doctor' ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-400 hover:text-primary-600'}`}
+          >
+            DOCTOR
+          </button>
+          <button 
+            onClick={() => setRole('admin')}
+            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${role === 'admin' ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-400 hover:text-primary-600'}`}
+          >
+            ADMIN
+          </button>
         </div>
 
         <div className="space-y-4">
@@ -46,14 +336,14 @@ export const LoginView: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
             <div className="relative">
               <Mail className="absolute left-3 top-3.5 text-gray-400" size={18} />
-              <input type="email" defaultValue="you@example.com" className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none" />
+              <input type="email" defaultValue={role === 'admin' ? 'admin@healthplus.com' : role === 'doctor' ? 'dr.aarav@healthplus.com' : 'rahul@gmail.com'} className="w-full pl-10 pr-4 py-3 bg-white rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none" />
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
             <div className="relative">
               <Lock className="absolute left-3 top-3.5 text-gray-400" size={18} />
-              <input type="password" defaultValue="........" className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none" />
+              <input type="password" defaultValue="........" className="w-full pl-10 pr-4 py-3 bg-white rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none" />
             </div>
           </div>
           
@@ -61,8 +351,8 @@ export const LoginView: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
              <a href="#" className="text-sm text-primary-400 hover:text-primary-600">Forgot Password?</a>
           </div>
 
-          <button onClick={onLogin} className="w-full bg-primary-600 text-white py-3.5 rounded-xl font-bold hover:bg-primary-700 transition shadow-lg shadow-primary-200 flex items-center justify-center gap-2">
-            Sign In <ChevronRight size={18} />
+          <button onClick={() => onLogin(role)} className="w-full bg-primary-600 text-white py-3.5 rounded-xl font-bold hover:bg-primary-700 transition shadow-lg shadow-primary-200 flex items-center justify-center gap-2">
+            Sign In as {role.charAt(0).toUpperCase() + role.slice(1)} <ChevronRight size={18} />
           </button>
         </div>
 
@@ -75,19 +365,47 @@ export const LoginView: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 };
 
 // --- Dashboard View ---
-export const DashboardView: React.FC = () => {
+export const DashboardView: React.FC<{ userRole: UserRole }> = ({ userRole }) => {
+  const navigate = useNavigate();
+  const upcomingAppointments = MOCK_APPOINTMENTS.filter(a => a.status === 'Confirmed');
+
+  if (userRole === 'admin') {
+    return <AdminDashboardView />;
+  }
+
+  let greetingName = MOCK_USER.name;
+  let bannerMessage = "Welcome to your health dashboard. You can manage your appointments, find specialists, and track your medical history here.";
+
+  if (userRole === 'doctor') {
+    greetingName = "Dr. Aarav Patel";
+    bannerMessage = "Welcome back, Doctor. You have 4 upcoming appointments today. Your schedule looks busy.";
+  }
+
   return (
     <div className="space-y-6">
       {/* Banner */}
       <div className="bg-gradient-to-r from-primary-600 to-[#5b21b6] rounded-3xl p-6 md:p-10 text-white relative overflow-hidden shadow-xl">
         <div className="relative z-10 max-w-2xl">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">Hello, {MOCK_USER.name}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">Hello, {greetingName}</h1>
           <p className="text-primary-100 mb-6 text-sm md:text-base leading-relaxed">
-            Welcome to your health dashboard. You can manage your appointments, find specialists, and track your medical history here.
+            {bannerMessage}
           </p>
-          <button className="bg-white text-primary-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-50 transition shadow-md">
-            Book New Appointment
-          </button>
+          {userRole === 'patient' && (
+            <button 
+              onClick={() => navigate('/doctors')}
+              className="bg-white text-primary-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-50 transition shadow-md"
+            >
+              Book New Appointment
+            </button>
+          )}
+          {userRole === 'doctor' && (
+            <button 
+              onClick={() => navigate('/appointments')}
+              className="bg-white text-primary-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-50 transition shadow-md"
+            >
+              View Schedule
+            </button>
+          )}
         </div>
         {/* Background Graphic */}
         <div className="absolute top-0 right-0 h-full w-1/2 opacity-10 pointer-events-none">
@@ -103,15 +421,16 @@ export const DashboardView: React.FC = () => {
         <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-bold text-lg flex items-center gap-2 text-gray-800">
-              <Calendar className="text-primary-600" size={20} /> Upcoming Appointment
+              <Calendar className="text-primary-600" size={20} /> 
+              {userRole === 'doctor' ? "Today's Schedule" : "Upcoming Appointment"}
             </h3>
-            <button className="text-sm text-primary-600 font-medium hover:underline">View all</button>
+            <button onClick={() => navigate('/appointments')} className="text-sm text-primary-600 font-medium hover:underline">View all</button>
           </div>
           
           <div className="border border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center justify-center text-center bg-gray-50/50">
-            {MOCK_APPOINTMENTS.length > 0 ? (
+            {upcomingAppointments.length > 0 ? (
                <div className="w-full text-left">
-                  {MOCK_APPOINTMENTS.slice(0,1).map(apt => (
+                  {upcomingAppointments.slice(0,1).map(apt => (
                     <div key={apt.id} className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center text-primary-600 font-bold">
                          {apt.date.split(' ')[0]}
@@ -135,34 +454,57 @@ export const DashboardView: React.FC = () => {
           </div>
         </div>
 
-        {/* Health Status */}
+        {/* Health Status / Stats */}
         <div className="space-y-6">
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
              <h3 className="font-bold text-lg flex items-center gap-2 text-gray-800 mb-4">
-               <Activity className="text-orange-500" size={20} /> Health Status
+               <Activity className="text-orange-500" size={20} /> 
+               {userRole === 'patient' ? "Health Status" : "Quick Stats"}
              </h3>
              <div className="space-y-4">
-               <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-                 <span className="text-gray-500 text-sm">BMI</span>
-                 <span className="font-bold text-gray-900">{MOCK_USER.bmi}</span>
-               </div>
-               <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-                 <span className="text-gray-500 text-sm">Blood Pressure</span>
-                 <span className="font-bold text-gray-900">{MOCK_USER.bp}</span>
-               </div>
-               <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-                 <span className="text-gray-500 text-sm">Heart Rate</span>
-                 <span className="font-bold text-gray-900">{MOCK_USER.heartRate}</span>
-               </div>
+               {userRole === 'patient' ? (
+                 <>
+                   <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+                     <span className="text-gray-500 text-sm">BMI</span>
+                     <span className="font-bold text-gray-900">{MOCK_USER.bmi}</span>
+                   </div>
+                   <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+                     <span className="text-gray-500 text-sm">Blood Pressure</span>
+                     <span className="font-bold text-gray-900">{MOCK_USER.bp}</span>
+                   </div>
+                   <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+                     <span className="text-gray-500 text-sm">Heart Rate</span>
+                     <span className="font-bold text-gray-900">{MOCK_USER.heartRate}</span>
+                   </div>
+                 </>
+               ) : (
+                 <>
+                   <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+                     <span className="text-gray-500 text-sm">New Patients</span>
+                     <span className="font-bold text-gray-900">12</span>
+                   </div>
+                   <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+                     <span className="text-gray-500 text-sm">Consultations</span>
+                     <span className="font-bold text-gray-900">45</span>
+                   </div>
+                   <div className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
+                     <span className="text-gray-500 text-sm">Pending Reports</span>
+                     <span className="font-bold text-gray-900">3</span>
+                   </div>
+                 </>
+               )}
              </div>
           </div>
 
           <div className="bg-blue-50 rounded-2xl p-6 border border-blue-100">
              <h3 className="font-bold text-blue-900 flex items-center gap-2 mb-2">
-               <Info size={18} /> Reminders
+               <Info size={18} /> {userRole === 'patient' ? 'Reminders' : 'System Alerts'}
              </h3>
              <p className="text-sm text-blue-700 leading-relaxed">
-               It's flu season! Don't forget to ask your doctor about the annual flu shot during your next visit.
+               {userRole === 'patient' 
+                 ? "It's flu season! Don't forget to ask your doctor about the annual flu shot during your next visit."
+                 : "Server maintenance scheduled for Sunday 2:00 AM. Please ensure all reports are saved."
+               }
              </p>
           </div>
         </div>
@@ -174,7 +516,15 @@ export const DashboardView: React.FC = () => {
 // --- Find Doctor View ---
 export const DoctorsView: React.FC = () => {
   const [filter, setFilter] = useState('');
+  const [selectedDoc, setSelectedDoc] = useState<Doctor | null>(null);
+  const [showPayment, setShowPayment] = useState(false);
   
+  const filteredDocs = MOCK_DOCTORS.filter(d => 
+    d.name.toLowerCase().includes(filter.toLowerCase()) || 
+    d.speciality.toLowerCase().includes(filter.toLowerCase()) || 
+    d.location.toLowerCase().includes(filter.toLowerCase())
+  );
+
   return (
     <div>
       <SectionHeader title="Find a Specialist" subtitle="Book appointments with top doctors near you" />
@@ -183,19 +533,25 @@ export const DoctorsView: React.FC = () => {
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-8 flex flex-col md:flex-row gap-4">
         <div className="flex-1 relative">
            <Search className="absolute left-3 top-3.5 text-gray-400" size={18} />
-           <input type="text" placeholder="Search doctor name or keyword..." className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary-500" />
+           <input 
+             type="text" 
+             placeholder="Search doctor name or keyword..." 
+             className="w-full pl-10 pr-4 py-3 bg-white rounded-xl border border-gray-200 outline-none focus:border-primary-500"
+             value={filter}
+             onChange={(e) => setFilter(e.target.value)}
+           />
         </div>
         <div className="flex-1 relative">
            <Search className="absolute left-3 top-3.5 text-gray-400" size={18} />
-           <input type="text" placeholder="Enter symptoms (e.g., chest pain...)" className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary-500" />
+           <input type="text" placeholder="Enter symptoms (e.g., chest pain...)" className="w-full pl-10 pr-4 py-3 bg-white rounded-xl border border-gray-200 outline-none focus:border-primary-500" />
         </div>
-        <button className="flex items-center gap-2 px-6 py-3 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50">
+        <button className="flex items-center gap-2 px-6 py-3 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 bg-white">
           <Filter size={18} /> All
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {MOCK_DOCTORS.map(doc => (
+        {filteredDocs.map(doc => (
           <div key={doc.id} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition">
             <div className="flex gap-4 mb-4">
                <div className={`w-16 h-16 rounded-xl flex items-center justify-center text-lg font-bold text-primary-700 bg-primary-100`}>
@@ -225,13 +581,37 @@ export const DoctorsView: React.FC = () => {
               <button className="py-2.5 rounded-xl bg-gray-100 text-gray-700 font-medium text-sm hover:bg-gray-200">
                 About Doctor
               </button>
-              <button className="py-2.5 rounded-xl bg-primary-600 text-white font-medium text-sm hover:bg-primary-700 flex items-center justify-center gap-2 shadow-lg shadow-primary-200">
+              <button 
+                onClick={() => setSelectedDoc(doc)}
+                className="py-2.5 rounded-xl bg-primary-600 text-white font-medium text-sm hover:bg-primary-700 flex items-center justify-center gap-2 shadow-lg shadow-primary-200"
+              >
                 <Calendar size={16} /> Book
               </button>
             </div>
           </div>
         ))}
       </div>
+
+      {selectedDoc && (
+        <BookingModal 
+          isOpen={!!selectedDoc}
+          onClose={() => setSelectedDoc(null)}
+          doctorName={selectedDoc.name}
+          slots={selectedDoc.availableSlots}
+          fee={selectedDoc.consultationFee}
+          onBook={() => {
+            setSelectedDoc(null);
+            setShowPayment(true);
+          }}
+        />
+      )}
+
+      <PaymentModal 
+        isOpen={showPayment}
+        onClose={() => setShowPayment(false)}
+        amount={selectedDoc?.consultationFee || 500}
+        onSuccess={() => alert('Appointment booked successfully!')}
+      />
     </div>
   );
 };
@@ -239,6 +619,18 @@ export const DoctorsView: React.FC = () => {
 // --- Appointments View ---
 export const AppointmentsView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'history'>('upcoming');
+  const [appointments, setAppointments] = useState(MOCK_APPOINTMENTS);
+
+  const filteredAppointments = appointments.filter(apt => {
+    if (activeTab === 'upcoming') return apt.status === 'Confirmed' || apt.status === 'Pending';
+    return apt.status === 'Completed' || apt.status === 'Cancelled';
+  });
+
+  const handleCancel = (id: string) => {
+    if (confirm("Are you sure you want to cancel?")) {
+      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'Cancelled' } : a));
+    }
+  };
 
   return (
     <div>
@@ -260,7 +652,7 @@ export const AppointmentsView: React.FC = () => {
       </div>
 
       <div className="space-y-4">
-        {MOCK_APPOINTMENTS.map(apt => (
+        {filteredAppointments.length > 0 ? filteredAppointments.map(apt => (
            <div key={apt.id} className="bg-white rounded-2xl p-4 md:p-6 border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex gap-4 items-center">
                  <div className="bg-gray-50 rounded-xl p-3 text-center min-w-[70px]">
@@ -270,11 +662,9 @@ export const AppointmentsView: React.FC = () => {
                  <div>
                     <div className="flex items-center gap-2">
                        <h3 className="font-bold text-lg text-gray-900">{apt.doctorName}</h3>
-                       {apt.paymentStatus === 'Paid' && (
-                         <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-                           <ShieldCheck size={10} /> Paid
-                         </span>
-                       )}
+                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 ${apt.status === 'Confirmed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                         {apt.status}
+                       </span>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
                        <span className="flex items-center gap-1"><Clock size={14} /> {apt.time}</span>
@@ -283,16 +673,23 @@ export const AppointmentsView: React.FC = () => {
                  </div>
               </div>
               
-              <div className="flex gap-3 justify-end">
-                <button className="px-4 py-2 border border-red-100 text-red-500 font-medium rounded-lg text-sm hover:bg-red-50">
-                  Cancel
-                </button>
-                <button className="px-4 py-2 bg-[#0f766e] text-white font-medium rounded-lg text-sm hover:bg-[#115e59] shadow-sm">
-                  Reschedule
-                </button>
-              </div>
+              {activeTab === 'upcoming' && (
+                <div className="flex gap-3 justify-end">
+                  <button onClick={() => handleCancel(apt.id)} className="px-4 py-2 border border-red-100 text-red-500 font-medium rounded-lg text-sm hover:bg-red-50 bg-white">
+                    Cancel
+                  </button>
+                  <button className="px-4 py-2 bg-[#0f766e] text-white font-medium rounded-lg text-sm hover:bg-[#115e59] shadow-sm">
+                    Reschedule
+                  </button>
+                </div>
+              )}
            </div>
-        ))}
+        )) : (
+          <div className="text-center py-10 bg-white rounded-2xl border border-gray-100">
+             <Calendar size={48} className="mx-auto text-gray-300 mb-2" />
+             <p className="text-gray-500">No appointments found in this tab.</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -300,6 +697,14 @@ export const AppointmentsView: React.FC = () => {
 
 // --- Clinic Finder View ---
 export const ClinicFinderView: React.FC = () => {
+  const [filter, setFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('All Types');
+  
+  const filteredClinics = MOCK_CLINICS.filter(c => 
+    c.name.toLowerCase().includes(filter.toLowerCase()) && 
+    (typeFilter === 'All Types' || c.type + 's' === typeFilter || c.type === typeFilter)
+  );
+
   return (
     <div>
       <SectionHeader title="Clinic & Hospital Finder" subtitle="Find nearby healthcare facilities" />
@@ -309,36 +714,38 @@ export const ClinicFinderView: React.FC = () => {
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
              <Search className="absolute left-3 top-3.5 text-gray-400" size={18} />
-             <input type="text" placeholder="Search clinics/hospitals..." className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary-500" />
+             <input 
+               type="text" 
+               placeholder="Search clinics/hospitals..." 
+               className="w-full pl-10 pr-4 py-3 bg-white rounded-xl border border-gray-200 outline-none focus:border-primary-500"
+               value={filter}
+               onChange={(e) => setFilter(e.target.value)}
+             />
           </div>
           <div className="w-full md:w-48 relative">
              <Filter className="absolute left-3 top-3.5 text-gray-400" size={18} />
-             <select className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 outline-none bg-white appearance-none">
+             <select 
+               className="w-full pl-10 pr-4 py-3 bg-white rounded-xl border border-gray-200 outline-none appearance-none"
+               value={typeFilter}
+               onChange={(e) => setTypeFilter(e.target.value)}
+             >
                 <option>All Types</option>
                 <option>Hospitals</option>
                 <option>Clinics</option>
              </select>
           </div>
           <div className="w-full md:w-48 flex items-center px-4 border border-gray-200 rounded-xl bg-white">
-             <span className="text-sm text-gray-500 mr-2">Max Distance: 10km</span>
+             <span className="text-sm text-gray-500 mr-2">Max Dist:</span>
              <input type="range" className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-600" />
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-           <span className="text-sm font-medium text-gray-700">Min Rating:</span>
-           <select className="border border-gray-200 rounded-lg py-1 px-2 text-sm bg-white outline-none">
-             <option>All</option>
-             <option>4.0+</option>
-             <option>4.5+</option>
-           </select>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {MOCK_CLINICS.map(clinic => (
+        {filteredClinics.map(clinic => (
           <div key={clinic.id} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition h-full flex flex-col">
              <div className="flex justify-between items-start mb-4">
-                <div className="h-32 w-full bg-gray-50 rounded-xl mb-4 absolute top-0 left-0 -z-10 hidden"></div> {/* Placeholder for structure */}
+                <div className="h-32 w-full bg-gray-50 rounded-xl mb-4 absolute top-0 left-0 -z-10 hidden"></div>
                 <h3 className="font-bold text-lg text-primary-700">{clinic.name}</h3>
                 <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase ${clinic.type === 'Hospital' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
                   {clinic.type}
@@ -378,6 +785,9 @@ export const ClinicFinderView: React.FC = () => {
 
 // --- Medicine View ---
 export const PharmacyView: React.FC<{ onAddToCart: (item: CartItem) => void }> = ({ onAddToCart }) => {
+  const [filter, setFilter] = useState('');
+  const filteredMeds = MOCK_MEDICINES.filter(m => m.name.toLowerCase().includes(filter.toLowerCase()));
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -386,7 +796,7 @@ export const PharmacyView: React.FC<{ onAddToCart: (item: CartItem) => void }> =
             <p className="text-gray-500">Order medicines online with prescription upload</p>
          </div>
          <button className="bg-purple-600 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 shadow-lg shadow-purple-200">
-           <ShoppingCart size={16} /> Cart (0)
+           <ShoppingCart size={16} /> Cart
          </button>
       </div>
 
@@ -396,7 +806,9 @@ export const PharmacyView: React.FC<{ onAddToCart: (item: CartItem) => void }> =
           <input 
             type="text" 
             placeholder="Search medicines..." 
-            className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 outline-none"
+            className="w-full pl-12 pr-4 py-3 bg-white rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 outline-none"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
           />
         </div>
         <div className="w-32 bg-white border border-gray-200 rounded-xl flex items-center justify-center font-medium">
@@ -405,7 +817,7 @@ export const PharmacyView: React.FC<{ onAddToCart: (item: CartItem) => void }> =
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-         {MOCK_MEDICINES.map(med => (
+         {filteredMeds.map(med => (
            <div key={med.id} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
               <div className="flex justify-between items-start mb-2">
                  <h3 className="font-bold text-lg text-purple-700">{med.name}</h3>
@@ -431,7 +843,11 @@ export const PharmacyView: React.FC<{ onAddToCart: (item: CartItem) => void }> =
 };
 
 // --- Lab Test View ---
-export const LabsView: React.FC<{ onAddToCart: (item: CartItem) => void }> = ({ onAddToCart }) => {
+export const LabsView: React.FC<{ onAddToCart: (item: CartItem) => void; cart: CartItem[] }> = ({ onAddToCart, cart }) => {
+  const [filter, setFilter] = useState('');
+  const filteredTests = MOCK_LAB_TESTS.filter(t => t.name.toLowerCase().includes(filter.toLowerCase()));
+  const labItemsInCart = cart.filter(i => i.type === 'test');
+
   return (
     <div>
       <SectionHeader title="Lab Test Booking" />
@@ -442,12 +858,14 @@ export const LabsView: React.FC<{ onAddToCart: (item: CartItem) => void }> = ({ 
               <input 
                 type="text" 
                 placeholder="Search lab tests..." 
-                className="w-full pl-4 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 outline-none"
+                className="w-full pl-4 pr-4 py-3 bg-white rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 outline-none"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {MOCK_LAB_TESTS.map(test => (
+              {filteredTests.map(test => (
                  <div key={test.id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
                     <h3 className="font-bold text-gray-900 text-lg mb-1">{test.name}</h3>
                     <p className="text-sm text-gray-500 mb-3">{test.preparation}</p>
@@ -477,7 +895,22 @@ export const LabsView: React.FC<{ onAddToCart: (item: CartItem) => void }> = ({ 
          {/* Right Booking Summary Sidebar (Desktop) */}
          <div className="hidden lg:block w-80 bg-white rounded-2xl border border-gray-100 p-6 h-fit sticky top-24">
             <h3 className="font-bold text-lg text-gray-900 mb-4">Booking Summary</h3>
-            <p className="text-gray-500 text-sm">No tests selected</p>
+            {labItemsInCart.length === 0 ? (
+               <p className="text-gray-500 text-sm">No tests selected</p>
+            ) : (
+               <ul className="space-y-3">
+                 {labItemsInCart.map(item => (
+                   <li key={item.id} className="text-sm flex justify-between border-b border-gray-50 pb-2">
+                     <span className="text-gray-700">{item.name}</span>
+                     <span className="font-bold">₹{item.price}</span>
+                   </li>
+                 ))}
+                 <li className="pt-2 flex justify-between font-bold text-lg border-t border-gray-100">
+                   <span>Total</span>
+                   <span>₹{labItemsInCart.reduce((acc, i) => acc + i.price, 0)}</span>
+                 </li>
+               </ul>
+            )}
          </div>
       </div>
     </div>
@@ -486,6 +919,9 @@ export const LabsView: React.FC<{ onAddToCart: (item: CartItem) => void }> = ({ 
 
 // --- Online Consult View ---
 export const OnlineConsultView: React.FC = () => {
+  const [selectedType, setSelectedType] = useState<'Chat' | 'Video' | null>(null);
+  const [showPayment, setShowPayment] = useState(false);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
        <div className="text-center mb-8">
@@ -495,8 +931,11 @@ export const OnlineConsultView: React.FC = () => {
 
        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-2xl w-full">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-             <div className="border border-gray-200 rounded-xl p-6 flex flex-col items-center text-center cursor-pointer hover:border-primary-500 hover:bg-primary-50 transition group">
-                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-500 group-hover:bg-white group-hover:text-primary-600">
+             <div 
+               onClick={() => setSelectedType('Chat')}
+               className={`border rounded-xl p-6 flex flex-col items-center text-center cursor-pointer transition ${selectedType === 'Chat' ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200' : 'border-gray-200 hover:border-primary-500 hover:bg-primary-50'}`}
+             >
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 transition ${selectedType === 'Chat' ? 'bg-white text-primary-600' : 'bg-gray-100 text-gray-500'}`}>
                    <MessageSquare size={24} />
                 </div>
                 <h3 className="font-bold text-gray-900 mb-1">Chat Consultation</h3>
@@ -504,8 +943,11 @@ export const OnlineConsultView: React.FC = () => {
                 <span className="font-bold text-gray-800">₹500</span>
              </div>
 
-             <div className="border border-gray-200 rounded-xl p-6 flex flex-col items-center text-center cursor-pointer hover:border-primary-500 hover:bg-primary-50 transition group">
-                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-500 group-hover:bg-white group-hover:text-primary-600">
+             <div 
+               onClick={() => setSelectedType('Video')}
+               className={`border rounded-xl p-6 flex flex-col items-center text-center cursor-pointer transition ${selectedType === 'Video' ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200' : 'border-gray-200 hover:border-primary-500 hover:bg-primary-50'}`}
+             >
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 transition ${selectedType === 'Video' ? 'bg-white text-primary-600' : 'bg-gray-100 text-gray-500'}`}>
                    <Video size={24} />
                 </div>
                 <h3 className="font-bold text-gray-900 mb-1">Video Consultation</h3>
@@ -514,16 +956,47 @@ export const OnlineConsultView: React.FC = () => {
              </div>
           </div>
 
-          <button className="w-full bg-[#64748b] text-white py-3 rounded-lg font-medium hover:bg-slate-600 transition">
-             Consult Now - ₹500
+          <button 
+             disabled={!selectedType}
+             onClick={() => setShowPayment(true)}
+             className="w-full bg-[#64748b] text-white py-3 rounded-lg font-medium hover:bg-slate-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+             {selectedType ? `Consult Now - ₹${selectedType === 'Chat' ? 500 : 1000}` : 'Select a type'}
           </button>
        </div>
+       
+       <PaymentModal 
+         isOpen={showPayment}
+         onClose={() => setShowPayment(false)}
+         amount={selectedType === 'Chat' ? 500 : 1000}
+         onSuccess={() => alert('Consultation started! Connecting you to a doctor...')}
+       />
     </div>
   );
 };
 
 // --- Health Records View ---
 export const RecordsView: React.FC = () => {
+  const [records, setRecords] = useState<HealthRecord[]>([
+    { id: '1', title: 'Blood Pressure Medication', date: '01/09/2023', type: 'Prescription', fileUrl: '#' },
+    { id: '2', title: 'Annual Health Checkup Report', date: '15/08/2023', type: 'Report', fileUrl: '#' }
+  ]);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const newRecord: HealthRecord = {
+        id: crypto.randomUUID(),
+        title: file.name,
+        date: new Date().toLocaleDateString('en-GB'),
+        type: 'Report',
+        fileUrl: '#',
+        size: `${(file.size / 1024 / 1024).toFixed(2)} MB`
+      };
+      setRecords([newRecord, ...records]);
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-start mb-6">
@@ -531,50 +1004,35 @@ export const RecordsView: React.FC = () => {
           <h1 className="text-2xl font-bold text-purple-600">Health Records</h1>
           <p className="text-gray-500 mt-1">Manage your prescriptions, reports, and test results</p>
         </div>
-        <button className="bg-[#a855f7] text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
-          <Plus size={16} /> Upload Record
-        </button>
+        <div className="relative">
+          <input type="file" id="uploadBtn" className="hidden" onChange={handleFileUpload} />
+          <label htmlFor="uploadBtn" className="bg-[#a855f7] text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 cursor-pointer hover:bg-[#9333ea]">
+            <Plus size={16} /> Upload Record
+          </label>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-         {/* Record 1 */}
-         <div className="bg-[#f0f9ff] rounded-2xl p-6 border border-blue-100">
-             <div className="flex items-start gap-3 mb-4">
-                <FileText className="text-blue-600 mt-1" size={24} />
-                <div>
-                   <h3 className="font-bold text-gray-900 text-lg">Blood Pressure Medication</h3>
-                   <p className="text-gray-500 text-sm">Prescription</p>
-                   <p className="text-gray-400 text-xs mt-1">01/09/2023</p>
-                </div>
-             </div>
-             <div className="flex gap-3 mt-4">
-                <button className="flex-1 bg-white border border-gray-200 py-2 rounded-xl text-gray-700 font-medium text-sm hover:bg-gray-50 flex items-center justify-center gap-2">
-                   <div className="w-4 h-4 rounded-full border border-gray-500 flex items-center justify-center"><div className="w-2 h-2 bg-gray-500 rounded-full"></div></div> View
-                </button>
-                <button className="flex-1 bg-[#a855f7] text-white py-2 rounded-xl font-medium text-sm hover:bg-[#9333ea] flex items-center justify-center gap-2 shadow-md shadow-purple-200">
-                   <Download size={16} /> Download
-                </button>
-             </div>
-         </div>
-         {/* Record 2 */}
-         <div className="bg-[#ecfdf5] rounded-2xl p-6 border border-green-100">
-             <div className="flex items-start gap-3 mb-4">
-                <FileText className="text-green-600 mt-1" size={24} />
-                <div>
-                   <h3 className="font-bold text-gray-900 text-lg">Annual Health Checkup Report</h3>
-                   <p className="text-gray-500 text-sm">Report</p>
-                   <p className="text-gray-400 text-xs mt-1">15/08/2023</p>
-                </div>
-             </div>
-             <div className="flex gap-3 mt-4">
-                <button className="flex-1 bg-white border border-gray-200 py-2 rounded-xl text-gray-700 font-medium text-sm hover:bg-gray-50 flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 rounded-full border border-gray-500 flex items-center justify-center"><div className="w-2 h-2 bg-gray-500 rounded-full"></div></div> View
-                </button>
-                <button className="flex-1 bg-[#a855f7] text-white py-2 rounded-xl font-medium text-sm hover:bg-[#9333ea] flex items-center justify-center gap-2 shadow-md shadow-purple-200">
-                   <Download size={16} /> Download
-                </button>
-             </div>
-         </div>
+         {records.map((rec) => (
+           <div key={rec.id} className={`rounded-2xl p-6 border ${rec.type === 'Prescription' ? 'bg-[#f0f9ff] border-blue-100' : 'bg-[#ecfdf5] border-green-100'}`}>
+               <div className="flex items-start gap-3 mb-4">
+                  <FileText className={`${rec.type === 'Prescription' ? 'text-blue-600' : 'text-green-600'} mt-1`} size={24} />
+                  <div>
+                     <h3 className="font-bold text-gray-900 text-lg">{rec.title}</h3>
+                     <p className="text-gray-500 text-sm">{rec.type}</p>
+                     <p className="text-gray-400 text-xs mt-1">{rec.date}</p>
+                  </div>
+               </div>
+               <div className="flex gap-3 mt-4">
+                  <button className="flex-1 bg-white border border-gray-200 py-2 rounded-xl text-gray-700 font-medium text-sm hover:bg-gray-50 flex items-center justify-center gap-2">
+                     <div className="w-4 h-4 rounded-full border border-gray-500 flex items-center justify-center"><div className="w-2 h-2 bg-gray-500 rounded-full"></div></div> View
+                  </button>
+                  <button className="flex-1 bg-[#a855f7] text-white py-2 rounded-xl font-medium text-sm hover:bg-[#9333ea] flex items-center justify-center gap-2 shadow-md shadow-purple-200">
+                     <Download size={16} /> Download
+                  </button>
+               </div>
+           </div>
+         ))}
       </div>
     </div>
   );
@@ -582,6 +1040,14 @@ export const RecordsView: React.FC = () => {
 
 // --- Profile View ---
 export const ProfileView: React.FC = () => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [user, setUser] = useState(MOCK_USER);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setUser(prev => ({ ...prev, [name]: value }));
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -600,19 +1066,19 @@ export const ProfileView: React.FC = () => {
          <div className="space-y-6">
             <div className="bg-white rounded-2xl p-8 border border-gray-100 flex flex-col items-center text-center">
                <div className="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center text-white text-3xl font-medium mb-4">
-                  {MOCK_USER.name.split(' ').map(n => n[0]).join('')}
+                  {user.name.split(' ').map(n => n[0]).join('')}
                </div>
-               <h2 className="font-bold text-xl text-gray-900">{MOCK_USER.name}</h2>
-               <p className="text-gray-500 text-sm mb-6">{MOCK_USER.email}</p>
+               <h2 className="font-bold text-xl text-gray-900">{user.name}</h2>
+               <p className="text-gray-500 text-sm mb-6">{user.email}</p>
                
                <div className="flex justify-between w-full px-4 pt-6 border-t border-gray-100">
                   <div className="text-center">
                      <p className="text-xs text-gray-400 uppercase font-bold">Blood Group</p>
-                     <p className="text-green-600 font-bold">{MOCK_USER.bloodGroup}</p>
+                     <p className="text-green-600 font-bold">{user.bloodGroup}</p>
                   </div>
                   <div className="text-center">
                      <p className="text-xs text-gray-400 uppercase font-bold">Age</p>
-                     <p className="text-gray-800 font-bold">{MOCK_USER.age}</p>
+                     <p className="text-gray-800 font-bold">{user.age}</p>
                   </div>
                </div>
             </div>
@@ -640,31 +1106,36 @@ export const ProfileView: React.FC = () => {
             <div className="bg-white rounded-2xl p-6 border border-gray-100">
                <div className="flex justify-between items-center mb-6">
                   <h3 className="font-bold text-gray-900 flex items-center gap-2"><User className="text-[#0f766e]" size={18}/> Personal Details</h3>
-                  <button className="text-sm text-[#0f766e] bg-green-50 px-3 py-1 rounded-lg font-medium flex items-center gap-1">Edit Details</button>
+                  <button 
+                    onClick={() => setIsEditing(!isEditing)}
+                    className={`text-sm px-3 py-1 rounded-lg font-medium flex items-center gap-1 transition ${isEditing ? 'bg-primary-600 text-white' : 'text-[#0f766e] bg-green-50'}`}
+                  >
+                    {isEditing ? <Check size={14} /> : <Edit2 size={14} />} {isEditing ? 'Save' : 'Edit Details'}
+                  </button>
                </div>
 
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                      <label className="block text-xs font-semibold text-gray-500 mb-1">Full Name</label>
-                     <input type="text" readOnly defaultValue={MOCK_USER.name} className="w-full p-3 bg-gray-50 rounded-xl border border-gray-100 text-gray-700 text-sm" />
+                     <input name="name" type="text" readOnly={!isEditing} value={user.name} onChange={handleInputChange} className={`w-full p-3 rounded-xl border border-gray-100 text-gray-700 text-sm ${!isEditing ? 'bg-gray-50' : 'bg-white ring-2 ring-primary-100'}`} />
                   </div>
                   <div>
                      <label className="block text-xs font-semibold text-gray-500 mb-1">Email</label>
-                     <input type="text" readOnly defaultValue={MOCK_USER.email} className="w-full p-3 bg-gray-50 rounded-xl border border-gray-100 text-gray-700 text-sm" />
+                     <input name="email" type="text" readOnly={!isEditing} value={user.email} onChange={handleInputChange} className={`w-full p-3 rounded-xl border border-gray-100 text-gray-700 text-sm ${!isEditing ? 'bg-gray-50' : 'bg-white ring-2 ring-primary-100'}`} />
                   </div>
                   <div>
                      <label className="block text-xs font-semibold text-gray-500 mb-1">Phone Number</label>
-                     <input type="text" readOnly defaultValue={MOCK_USER.phone} className="w-full p-3 bg-gray-50 rounded-xl border border-gray-100 text-gray-700 text-sm" />
+                     <input name="phone" type="text" readOnly={!isEditing} value={user.phone} onChange={handleInputChange} className={`w-full p-3 rounded-xl border border-gray-100 text-gray-700 text-sm ${!isEditing ? 'bg-gray-50' : 'bg-white ring-2 ring-primary-100'}`} />
                   </div>
                   <div>
                      <label className="block text-xs font-semibold text-gray-500 mb-1">Date of Birth</label>
-                     <input type="text" readOnly defaultValue={MOCK_USER.dob} className="w-full p-3 bg-gray-50 rounded-xl border border-gray-100 text-gray-700 text-sm" />
+                     <input name="dob" type="text" readOnly={!isEditing} value={user.dob} onChange={handleInputChange} className={`w-full p-3 rounded-xl border border-gray-100 text-gray-700 text-sm ${!isEditing ? 'bg-gray-50' : 'bg-white ring-2 ring-primary-100'}`} />
                   </div>
                   <div className="md:col-span-2">
                      <label className="block text-xs font-semibold text-gray-500 mb-1">Address</label>
                      <div className="relative">
                         <MapPin className="absolute left-3 top-3 text-gray-400" size={16} />
-                        <input type="text" readOnly defaultValue={MOCK_USER.address} className="w-full pl-9 p-3 bg-gray-50 rounded-xl border border-gray-100 text-gray-700 text-sm" />
+                        <input name="address" type="text" readOnly={!isEditing} value={user.address} onChange={handleInputChange} className={`w-full pl-9 p-3 rounded-xl border border-gray-100 text-gray-700 text-sm ${!isEditing ? 'bg-gray-50' : 'bg-white ring-2 ring-primary-100'}`} />
                      </div>
                   </div>
                </div>
@@ -675,17 +1146,19 @@ export const ProfileView: React.FC = () => {
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div>
                      <label className="block text-xs font-semibold text-gray-500 mb-1">Blood Group</label>
-                     <select disabled className="w-full p-3 bg-gray-50 rounded-xl border border-gray-100 text-gray-700 text-sm appearance-none">
+                     <select disabled={!isEditing} className={`w-full p-3 rounded-xl border border-gray-100 text-gray-700 text-sm appearance-none ${!isEditing ? 'bg-gray-50' : 'bg-white ring-2 ring-primary-100'}`}>
                         <option>O+</option>
+                        <option>A+</option>
+                        <option>B+</option>
                      </select>
                   </div>
                   <div>
                      <label className="block text-xs font-semibold text-gray-500 mb-1">Emergency Contact</label>
-                     <input type="text" readOnly defaultValue={MOCK_USER.emergencyContact} className="w-full p-3 bg-gray-50 rounded-xl border border-gray-100 text-gray-700 text-sm" />
+                     <input type="text" readOnly={!isEditing} defaultValue={MOCK_USER.emergencyContact} className={`w-full p-3 rounded-xl border border-gray-100 text-gray-700 text-sm ${!isEditing ? 'bg-gray-50' : 'bg-white ring-2 ring-primary-100'}`} />
                   </div>
                   <div>
                      <label className="block text-xs font-semibold text-gray-500 mb-1">Allergies</label>
-                     <input type="text" readOnly placeholder="None" className="w-full p-3 bg-gray-50 rounded-xl border border-gray-100 text-gray-700 text-sm" />
+                     <input type="text" readOnly={!isEditing} placeholder="None" className={`w-full p-3 rounded-xl border border-gray-100 text-gray-700 text-sm ${!isEditing ? 'bg-gray-50' : 'bg-white ring-2 ring-primary-100'}`} />
                   </div>
                </div>
             </div>
@@ -770,7 +1243,6 @@ export const CartView: React.FC<{ cart: CartItem[], onRemove: (id: string) => vo
         onClose={() => setIsPaymentOpen(false)} 
         amount={finalTotal}
         onSuccess={() => {
-           // In a real app we'd clear the cart here
            setIsPaymentOpen(false);
            alert("Order placed successfully! (Mock)");
         }}

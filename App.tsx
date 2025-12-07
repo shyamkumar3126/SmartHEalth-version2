@@ -12,12 +12,15 @@ import {
   ClinicFinderView, 
   OnlineConsultView, 
   ProfileView,
-  LoginView
+  LoginView,
+  AdminUserManagementView,
+  AdminSettingsView
 } from './components/Views';
-import { CartItem } from './types';
+import { CartItem, UserRole } from './types';
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole>('patient');
   const [cart, setCart] = useState<CartItem[]>([]);
 
   const addToCart = (item: CartItem) => {
@@ -33,12 +36,14 @@ const App: React.FC = () => {
     setCart((prev) => prev.filter(item => item.id !== id));
   };
 
-  const handleLogin = () => {
+  const handleLogin = (role: UserRole) => {
+    setUserRole(role);
     setIsAuthenticated(true);
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
+    setUserRole('patient');
   };
 
   if (!isAuthenticated) {
@@ -47,18 +52,32 @@ const App: React.FC = () => {
 
   return (
     <HashRouter>
-      <Layout cartCount={cart.length} onLogout={handleLogout}>
+      <Layout cartCount={cart.length} onLogout={handleLogout} userRole={userRole}>
         <Routes>
-          <Route path="/" element={<DashboardView />} />
-          <Route path="/doctors" element={<DoctorsView />} />
-          <Route path="/pharmacy" element={<PharmacyView onAddToCart={addToCart} />} />
-          <Route path="/labs" element={<LabsView onAddToCart={addToCart} />} />
-          <Route path="/records" element={<RecordsView />} />
-          <Route path="/appointments" element={<AppointmentsView />} />
-          <Route path="/clinics" element={<ClinicFinderView />} />
-          <Route path="/consult" element={<OnlineConsultView />} />
-          <Route path="/profile" element={<ProfileView />} />
-          <Route path="/cart" element={<CartView cart={cart} onRemove={removeFromCart} />} />
+          {/* Shared Dashboard Route which internally decides what to render based on role */}
+          <Route path="/" element={<DashboardView userRole={userRole} />} />
+          
+          {/* Admin Routes */}
+          {userRole === 'admin' ? (
+             <>
+               <Route path="/users" element={<AdminUserManagementView />} />
+               <Route path="/settings" element={<AdminSettingsView />} />
+             </>
+          ) : (
+             // Patient/Doctor Routes
+             <>
+               <Route path="/doctors" element={<DoctorsView />} />
+               <Route path="/pharmacy" element={<PharmacyView onAddToCart={addToCart} />} />
+               <Route path="/labs" element={<LabsView onAddToCart={addToCart} cart={cart} />} />
+               <Route path="/records" element={<RecordsView />} />
+               <Route path="/appointments" element={<AppointmentsView />} />
+               <Route path="/clinics" element={<ClinicFinderView />} />
+               <Route path="/consult" element={<OnlineConsultView />} />
+               <Route path="/profile" element={<ProfileView />} />
+               <Route path="/cart" element={<CartView cart={cart} onRemove={removeFromCart} />} />
+             </>
+          )}
+          
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout>

@@ -1,4 +1,4 @@
-import { Doctor, Medicine, LabTest, Speciality, Clinic, UserProfile, Appointment } from './types';
+import { Doctor, Medicine, LabTest, Speciality, Clinic, UserProfile, Appointment, AdminUser, ActivityLog } from './types';
 
 export const MOCK_USER: UserProfile = {
   name: "Rahul Khanna",
@@ -35,6 +35,16 @@ export const MOCK_APPOINTMENTS: Appointment[] = [
     time: '11:30 AM',
     type: 'Clinic Visit',
     status: 'Confirmed',
+    paymentStatus: 'Paid'
+  },
+  {
+    id: 'a3',
+    doctorId: 'd2',
+    doctorName: 'Dr. Priya Sharma',
+    date: '15 Nov',
+    time: '09:00 AM',
+    type: 'Video Consult',
+    status: 'Completed',
     paymentStatus: 'Paid'
   }
 ];
@@ -275,4 +285,21 @@ export const MOCK_CLINICS: Clinic[] = [
     imageColor: 'bg-blue-100',
     tags: ['Pediatrics', 'Neonatology']
   }
+];
+
+export const MOCK_ADMIN_USERS: AdminUser[] = [
+  { id: '#2401', name: 'Dr. Wilson', role: 'Doctor', email: 'wilson@clinic.com', status: 'Active', joinDate: '2023-10-01' },
+  { id: '#2402', name: 'Sarah Jones', role: 'Patient', email: 'sarah.j@email.com', status: 'Active', joinDate: '2023-11-15' },
+  { id: '#2403', name: 'James Smith', role: 'Patient', email: 'james.s@email.com', status: 'Inactive', joinDate: '2023-09-20' },
+  { id: '#2404', name: 'Dr. Emily Chen', role: 'Doctor', email: 'echen@hospital.com', status: 'Active', joinDate: '2023-08-05' },
+  { id: '#2405', name: 'Michael Brown', role: 'Patient', email: 'mbrown@email.com', status: 'Active', joinDate: '2023-12-01' },
+  { id: '#2406', name: 'Dr. A. Gupta', role: 'Doctor', email: 'agupta@clinic.com', status: 'Active', joinDate: '2023-07-22' },
+];
+
+export const MOCK_ACTIVITY_LOG: ActivityLog[] = [
+  { id: '1', user: 'User #2401', action: 'Booked an appointment with Dr. Wilson', date: '2 mins ago' },
+  { id: '2', user: 'User #2402', action: 'Updated profile information', date: '15 mins ago' },
+  { id: '3', user: 'User #2403', action: 'Uploaded a lab report', date: '1 hour ago' },
+  { id: '4', user: 'User #2404', action: 'Cancelled appointment #A102', date: '3 hours ago' },
+  { id: '5', user: 'User #2405', action: 'Registered new account', date: '5 hours ago' },
 ];
