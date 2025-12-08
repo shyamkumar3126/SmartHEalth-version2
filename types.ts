@@ -74,7 +74,7 @@ export interface Appointment {
   date: string;
   time: string;
   type: 'Clinic Visit' | 'Video Consult';
-  status: 'Confirmed' | 'Completed' | 'Cancelled';
+  status: 'Confirmed' | 'Completed' | 'Cancelled' | 'Pending';
   paymentStatus: 'Paid' | 'Pending';
 }
 

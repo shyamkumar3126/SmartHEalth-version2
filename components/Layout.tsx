@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Stethoscope, 
@@ -16,7 +16,6 @@ import {
   X,
   Users,
   Settings,
-  ClipboardList,
   ShieldAlert,
   Grid
 } from 'lucide-react';
@@ -49,7 +48,7 @@ export const Layout: React.FC<{ children: React.ReactNode, cartCount: number, on
   const doctorNavItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
     { name: 'My Schedule', icon: CalendarDays, path: '/appointments' },
-    { name: 'My Patients', icon: Users, path: '/patients' }, // Placeholder route
+    { name: 'My Patients', icon: Users, path: '/patients' }, 
     { name: 'Consultations', icon: MessageSquare, path: '/consult' },
     { name: 'Health Records', icon: FileText, path: '/records' },
     { name: 'Notifications', icon: Bell, path: '/notifications' },
@@ -107,22 +106,23 @@ export const Layout: React.FC<{ children: React.ReactNode, cartCount: number, on
       </div>
 
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.name}
-            to={item.path}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <Link
+              key={item.name}
+              to={item.path}
+              className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
                 isActive
                   ? 'text-primary-600 bg-primary-50'
                   : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-              }`
-            }
-          >
-            <item.icon size={18} />
-            {item.name}
-          </NavLink>
-        ))}
+              }`}
+            >
+              <item.icon size={18} />
+              {item.name}
+            </Link>
+          );
+        })}
       </nav>
 
       <div className="p-4 border-t border-gray-100">

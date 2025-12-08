@@ -14,7 +14,9 @@ import {
   ProfileView,
   LoginView,
   AdminUserManagementView,
-  AdminSettingsView
+  AdminSettingsView,
+  NotificationsView,
+  PatientsView
 } from './components/Views';
 import { CartItem, UserRole } from './types';
 
@@ -75,6 +77,8 @@ const App: React.FC = () => {
                <Route path="/consult" element={<OnlineConsultView />} />
                <Route path="/profile" element={<ProfileView />} />
                <Route path="/cart" element={<CartView cart={cart} onRemove={removeFromCart} />} />
+               <Route path="/notifications" element={<NotificationsView />} />
+               <Route path="/patients" element={<PatientsView />} />
              </>
           )}
           

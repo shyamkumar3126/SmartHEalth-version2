@@ -4,7 +4,7 @@ import {
   Search, MapPin, Star, Video, ShoppingCart, Plus, Upload, Trash2, 
   Activity, Filter, Info, ShieldCheck, Clock, FileText, ChevronRight, 
   Calendar, Lock, Mail, User, Home, Download, MessageSquare, Phone, TestTube2, Edit2, Check,
-  Users, AlertTriangle, Activity as ActivityIcon, MoreVertical, ToggleLeft, ToggleRight, Save, Settings
+  Users, AlertTriangle, Activity as ActivityIcon, MoreVertical, ToggleLeft, ToggleRight, Save, Settings, Bell
 } from 'lucide-react';
 import { MOCK_DOCTORS, MOCK_MEDICINES, MOCK_LAB_TESTS, MOCK_CLINICS, MOCK_APPOINTMENTS, MOCK_USER, MOCK_ADMIN_USERS, MOCK_ACTIVITY_LOG } from '../constants';
 import { Doctor, Medicine, LabTest, CartItem, HealthRecord, Clinic, UserProfile, Appointment, UserRole, AdminUser } from '../types';
@@ -292,6 +292,86 @@ export const AdminSettingsView: React.FC = () => {
       </div>
     </div>
   );
+};
+
+// --- Notifications View (NEW) ---
+export const NotificationsView: React.FC = () => {
+  const notifications = [
+    { id: 1, title: 'Appointment Confirmed', message: 'Your appointment with Dr. Aarav Patel is confirmed for tomorrow.', time: '2 hours ago', unread: true },
+    { id: 2, title: 'Lab Results Available', message: 'Your blood test results are now available for download.', time: '1 day ago', unread: false },
+    { id: 3, title: 'Prescription Refill', message: 'Time to refill your Vitamin D3 supplement.', time: '2 days ago', unread: false },
+  ];
+
+  return (
+    <div>
+      <SectionHeader title="Notifications" subtitle="Stay updated with your health alerts" />
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {notifications.map((n) => (
+          <div key={n.id} className={`p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition ${n.unread ? 'bg-blue-50/50' : ''}`}>
+             <div className="flex gap-4">
+               <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${n.unread ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
+                 <Bell size={20} />
+               </div>
+               <div className="flex-1">
+                 <h4 className={`text-sm font-bold ${n.unread ? 'text-gray-900' : 'text-gray-600'}`}>{n.title}</h4>
+                 <p className="text-sm text-gray-500 mt-1">{n.message}</p>
+                 <p className="text-xs text-gray-400 mt-2">{n.time}</p>
+               </div>
+               {n.unread && <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>}
+             </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// --- Patients View (NEW) ---
+export const PatientsView: React.FC = () => {
+   // Mock patients for Doctor view
+   const patients = [
+     { id: '1', name: 'Rahul Khanna', age: 38, gender: 'Male', lastVisit: '2 days ago', condition: 'Hypertension', status: 'Stable' },
+     { id: '2', name: 'Sarah Jones', age: 29, gender: 'Female', lastVisit: '1 week ago', condition: 'Routine Checkup', status: 'Recovered' },
+     { id: '3', name: 'Mike Ross', age: 45, gender: 'Male', lastVisit: '3 weeks ago', condition: 'Post-Op Care', status: 'Critical' },
+   ];
+
+   return (
+    <div>
+       <SectionHeader title="My Patients" subtitle="Manage your patient records" />
+       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <table className="w-full text-left">
+             <thead className="bg-gray-50">
+                <tr>
+                   <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Name</th>
+                   <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Age/Gender</th>
+                   <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Condition</th>
+                   <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Last Visit</th>
+                   <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                   <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase text-right">Action</th>
+                </tr>
+             </thead>
+             <tbody className="divide-y divide-gray-100">
+               {patients.map(p => (
+                 <tr key={p.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 font-bold text-gray-900">{p.name}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{p.age} / {p.gender}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{p.condition}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500">{p.lastVisit}</td>
+                    <td className="px-6 py-4">
+                       <span className={`text-xs font-bold px-2 py-1 rounded-full ${p.status === 'Critical' ? 'bg-red-100 text-red-600' : p.status === 'Recovered' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
+                         {p.status}
+                       </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                       <button className="text-primary-600 text-sm font-medium hover:underline">View</button>
+                    </td>
+                 </tr>
+               ))}
+             </tbody>
+          </table>
+       </div>
+    </div>
+   );
 };
 
 // --- Login View ---
@@ -978,8 +1058,8 @@ export const OnlineConsultView: React.FC = () => {
 // --- Health Records View ---
 export const RecordsView: React.FC = () => {
   const [records, setRecords] = useState<HealthRecord[]>([
-    { id: '1', title: 'Blood Pressure Medication', date: '01/09/2023', type: 'Prescription', fileUrl: '#' },
-    { id: '2', title: 'Annual Health Checkup Report', date: '15/08/2023', type: 'Report', fileUrl: '#' }
+    { id: '1', title: 'Blood Pressure Medication', date: '01/09/2023', type: 'Prescription', fileUrl: '#', size: '1.2 MB' },
+    { id: '2', title: 'Annual Health Checkup Report', date: '15/08/2023', type: 'Report', fileUrl: '#', size: '2.4 MB' }
   ]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
